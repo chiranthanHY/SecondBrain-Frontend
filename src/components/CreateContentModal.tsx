@@ -10,93 +10,66 @@ enum ContentType {
     Twitter = "twitter"
 }
 
-// Define Props for Type Safety
-interface ModalProps {
-    open: boolean;
-    onClose: () => void;
-}
-
-export function CreateContentModal({ open, onClose }: ModalProps) {
-    const titleRef = useRef<HTMLInputElement | null>(null);
-    const linkRef = useRef<HTMLInputElement | null>(null);
+// controlled component
+export function CreateContentModal({open, onClose}) {
+    const titleRef = useRef<HTMLInputElement>();
+    const linkRef = useRef<HTMLInputElement>();
     const [type, setType] = useState(ContentType.Youtube);
 
     async function addContent() {
-        const title = titleRef.current?.value?.trim();
-        const link = linkRef.current?.value?.trim();
+        const title = titleRef.current?.value;
+        const link = linkRef.current?.value;
 
-        if (!title || !link) {
-            alert("Title and Link are required.");
-            return;
-        }
+        await axios.post(`${BACKEND_URL}/api/v1/content`, {
+            link,
+            title,
+            type
+        }, {
+            headers: {
+                "Authorization": localStorage.getItem("token")
+            }
+        })
 
-        try {
-            await axios.post(
-                `${BACKEND_URL}/api/v1/content`,
-                { link, title, type },
-                { headers: { Authorization: localStorage.getItem("token") } }
-            );
-            onClose();
-        } catch (error) {
-            console.error("Error adding content:", error);
-            alert("Failed to add content. Please try again.");
-        }
+        onClose();
+
     }
 
-    if (!open) return null;
-
-    return (
-        <div className="fixed inset-0 flex items-center justify-center">
-            {/* Modal Overlay */}
-            <div
-                className="fixed inset-0 bg-gray-500 opacity-60"
-                onClick={onClose}
-            />
-
-            {/* Modal Content */}
-            <div className="relative bg-white p-6 rounded-lg shadow-lg w-96">
-                {/* Close Button */}
-                <div className="flex justify-end">
-                    <button onClick={onClose} className="cursor-pointer">
-                        <CrossIcon onClick={onClose} />
-                    </button>
-                </div>
-
-                {/* Form */}
-                <div className="space-y-4">
-                    <Input reference={titleRef} placeholder="Title" />
-                    <Input reference={linkRef} placeholder="Link" />
-
-                    {/* Type Selection */}
-                    <div>
-                        <h1 className="text-lg font-semibold">Type</h1>
-                        <div className="flex gap-2 justify-center">
-                            <Button
-                                text="YouTube"
-                                variant={type === ContentType.Youtube ? "primary" : "secondary"}
-                                onClick={() => setType(ContentType.Youtube)}
-                                startIcon={undefined} // Pass undefined or optional prop
-                            />
-                            <Button
-                                text="Twitter"
-                                variant={type === ContentType.Twitter ? "primary" : "secondary"}
-                                onClick={() => setType(ContentType.Twitter)}
-                                startIcon={undefined} // Pass undefined or optional prop
-                            />
-                        </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-center">
-                        <Button
-                            onClick={addContent}
-                            variant="primary"
-                            text="Submit"
-                            startIcon={undefined} // Pass undefined or optional prop
-                        />
-                    </div>
-                </div>
+    return <div>
+        {open && <div> 
+            <div className="w-screen h-screen bg-slate-500 fixed top-0 left-0 opacity-60 flex justify-center">
+               
             </div>
-        </div>
-    );
+            <div className="w-screen h-screen fixed top-0 left-0 flex justify-center">
+                <div className="flex flex-col justify-center">
+                    <span className="bg-white opacity-100 p-4 rounded fixed">
+                        <div className="flex justify-end">
+                            <div onClick={onClose} className="cursor-pointer">
+                                <CrossIcon />
+                            </div>
+                        </div>
+                        <div>
+                            <Input reference={titleRef} placeholder={"Title"} />
+                            <Input reference={linkRef} placeholder={"Link"} />
+                        </div>
+                        <div>
+                            <h1>Type</h1>
+                            <div className="flex gap-1 justify-center pb-2">
+                                <Button text="Youtube" variant={type === ContentType.Youtube ? "primary" : "secondary"} onClick={() => {
+                                    setType(ContentType.Youtube)
+                                }}></Button>
+                                <Button text="Twitter" variant={type === ContentType.Twitter ? "primary" : "secondary"} onClick={() => {
+                                    setType(ContentType.Twitter)
+                                }}></Button>
+                            </div>
+                        </div>
+                        <div className="flex justify-center">
+                            <Button onClick={addContent} variant="primary" text="Submit" />
+                        </div>
+                    </span>
+                </div>     
+            </div>
+            
+        </div>}
+    </div>
+
 }
