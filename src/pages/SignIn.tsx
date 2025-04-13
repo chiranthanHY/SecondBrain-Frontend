@@ -1,37 +1,63 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
 
-export default function SignUp() {
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
+const SignIn = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-
     try {
-      const email = emailRef.current?.value;
-      const password = passwordRef.current?.value;
-
-      await axios.post(BACKEND_URL + "/api/v1/signin", {
+      const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
         username: email,
-        password
+        password,
       });
 
-      navigate("/dashboard");
-      alert("You have signed up!");
+      // ✅ Store JWT token in localStorage
+      localStorage.setItem("token", response.data.token);
+
+      toast({
+        title: "Success",
+        description: "Signed in successfully!",
+      });
+
+      navigate('/dashboard');
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to sign in');
+        toast({
+          title: "Authentication Failed",
+          description: err.response?.data?.message || 'Invalid credentials',
+          variant: "destructive",
+        });
       } else {
-        setError('An unexpected error occurred');
+        toast({
+          title: "Unexpected Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
       }
     } finally {
       setIsLoading(false);
@@ -39,82 +65,100 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex justify-center">
-            <Brain className="h-12 w-12 text-purple-600" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/signin" className="font-medium text-purple-600 hover:text-purple-500">
-              Sign in
-            </Link>
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-6">
+      <div className="auth-card">
+        <div className="mb-8 flex justify-between items-center">
+          <Link to="/" className="text-gray-500 hover:text-brain-blue flex items-center">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            <span>Back to home</span>
+          </Link>
+          <Link to="/" className="text-brain-blue text-2xl font-bold">SecondBrain.</Link>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  ref={emailRef}
-                  className="appearance-none rounded-t-md relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  ref={passwordRef}
-                  className="appearance-none rounded-b-md relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
-                />
-              </div>
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
+        <h1 className="text-2xl font-bold mb-1 text-gray-800">Welcome back</h1>
+        <p className="text-gray-600 mb-8">Sign in to your account to continue</p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                className="input-field"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <Link to="/forgot-password" className="text-sm text-brain-blue hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="input-field pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                className="data-[state=checked]:bg-brain-blue data-[state=checked]:border-brain-blue"
+              />
+              <label htmlFor="remember" className="ml-2 text-sm text-gray-600">
+                Remember me for 30 days
+              </label>
+            </div>
+
+            <Button type="submit" disabled={isLoading} className="w-full btn-primary py-6">
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </Button>
+
+            <div className="relative flex items-center justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">or continue with</span>
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300"></span>
+              </div>
+            </div>
+
+            <Button variant="outline" className="w-full py-6 border-gray-300 hover:bg-gray-50">
+              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
+                {/* Google logo SVG paths here */}
+              </svg>
+              Continue with Google
+            </Button>
           </div>
         </form>
+
+        <p className="mt-8 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/signup" className="text-brain-blue font-semibold hover:underline">
+            Sign up for free
+          </Link>
+        </p>
       </div>
     </div>
   );
-}
+};
+
+export default SignIn;

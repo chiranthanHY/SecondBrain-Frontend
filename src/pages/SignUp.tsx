@@ -1,120 +1,170 @@
-import React, { useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Brain, Mail, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { BACKEND_URL } from '../config';
 
-export default function SignUp() {
-  const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
+const SignUp = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
+
+    if (!email || !password || !name) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!agreeToTerms) {
+      toast({
+        title: "Error",
+        description: "You must agree to the terms and conditions",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const email = emailRef.current?.value;
-      const password = passwordRef.current?.value;
-
+      setIsLoading(true);
       await axios.post(BACKEND_URL + "/api/v1/signup", {
         username: email,
-        password
+        password,
+        name, // send name if backend accepts it
+      });
+
+      toast({
+        title: "Success",
+        description: "You have successfully signed up!",
       });
 
       navigate("/signin");
-      alert("You have signed up!");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to sign up');
-      } else {
-        setError('An unexpected error occurred');
-      }
+    } catch (err: any) {
+      const message =
+        axios.isAxiosError(err) && err.response?.data?.message
+          ? err.response.data.message
+          : "An unexpected error occurred";
+
+      toast({
+        title: "Sign up failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex justify-center">
-            <Brain className="h-12 w-12 text-purple-600" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/signin" className="font-medium text-purple-600 hover:text-purple-500">
-              Sign in
-            </Link>
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-6">
+      <div className="auth-card">
+        <div className="mb-8 flex justify-between items-center">
+          <Link to="/" className="text-gray-500 hover:text-brain-blue flex items-center">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            <span>Back to home</span>
+          </Link>
+          <Link to="/" className="text-brain-blue text-2xl font-bold">SecondBrain.</Link>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  ref={emailRef}
-                  className="appearance-none rounded-t-md relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  ref={passwordRef}
-                  className="appearance-none rounded-b-md relative block w-full px-3 py-2 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
-                />
-              </div>
-            </div>
-          </div>
 
-          <div>
-            <button
+        <h1 className="text-2xl font-bold mb-1 text-gray-800">Create your account</h1>
+        <p className="text-gray-600 mb-8">Start organizing your ideas with SecondBrain</p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
+                  className="pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Must be at least 8 characters long.
+              </p>
+            </div>
+
+            <div className="flex items-start">
+              <Checkbox
+                id="terms"
+                checked={agreeToTerms}
+                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
+                className="mt-1 data-[state=checked]:bg-brain-blue data-[state=checked]:border-brain-blue"
+              />
+              <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+                I agree to the{' '}
+                <Link to="/terms" className="text-brain-blue hover:underline">Terms of Service</Link>{' '}
+                and{' '}
+                <Link to="/privacy" className="text-brain-blue hover:underline">Privacy Policy</Link>
+              </label>
+            </div>
+
+            <Button
               type="submit"
+              className="w-full btn-primary py-6"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Creating account...' : 'Create account'}
-            </button>
+            </Button>
           </div>
         </form>
+
+        <p className="mt-8 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link to="/signin" className="text-brain-blue font-semibold hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
-}
+};
+
+export default SignUp;
