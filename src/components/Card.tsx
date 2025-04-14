@@ -33,15 +33,20 @@ export function Card({ title, link, type }: CardProps) {
   };
 
   return (
-    <div className="p-4 bg-white rounded-2xl border border-gray-200 max-w-80 min-w-72 shadow-md">
+    <div
+      className={`p-4 bg-white rounded-2xl border border-gray-200 shadow-md w-72 ${
+        type === "youtube" || type === "document" ? "h-[220px]" : "h-auto"
+      }`}
+    >
+      {/* Header */}
       <div className="flex justify-between items-start">
-        <div className="flex items-center text-base font-medium text-gray-800">
+        <div className="flex items-center text-sm font-medium text-gray-800">
           <div className="text-gray-500 mr-2">
             {type === "youtube" && <YoutubeIcon />}
             {type === "twitter" && <TwitterIcon />}
             {type === "document" && <DocumentIcon />}
           </div>
-          <span className="line-clamp-2">{title}</span>
+          <span className="line-clamp-1">{title}</span>
         </div>
         <div className="flex items-center space-x-2 text-gray-400">
           <a href={link} target="_blank" rel="noopener noreferrer">
@@ -53,6 +58,7 @@ export function Card({ title, link, type }: CardProps) {
         </div>
       </div>
 
+      {/* Content */}
       <div className="pt-4">
         {type === "youtube" && (
           <iframe
@@ -62,7 +68,7 @@ export function Card({ title, link, type }: CardProps) {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-          ></iframe>
+          />
         )}
 
         {type === "twitter" && (
@@ -72,8 +78,13 @@ export function Card({ title, link, type }: CardProps) {
         )}
 
         {type === "document" && (
-          <div className="border p-3 rounded-md bg-gray-50 text-gray-600 text-sm text-center">
-            <a href={link} target="_blank" rel="noopener noreferrer" className="underline font-medium">
+          <div className="border p-3 rounded-md bg-gray-50 text-gray-600 text-sm text-center mt-2">
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+            >
               View Document
             </a>
           </div>
