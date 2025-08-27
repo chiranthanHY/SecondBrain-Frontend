@@ -5,6 +5,7 @@ import { CreateContentModal } from "../components/CreateContentModal"
 import { PlusIcon } from "../icons/PlusIcon"
 import { ShareIcon } from "../icons/ShareIcon"
 import { Sidebar } from "../components/Sidebar"
+import { GeminiSidebar } from "../components/GeminiSidebar"
 import { useContent } from "../hooks/useContent"
 import { BACKEND_URL } from "../config"
 import axios from "axios"
@@ -53,11 +54,12 @@ export function Dashboard() {
 
   return <div>
     <Sidebar />
-    <div className="p-4 ml-72 min-h-screen bg-gray-100 border-2">
+    <div className="p-4 ml-72 min-h-screen bg-gray-100 border-2 relative">
+      <GeminiSidebar />
       <CreateContentModal open={modalOpen} onClose={() => {
         setModalOpen(false);
       }} />
-      <div className="flex justify-end gap-4 mb-8">
+      <div className="flex justify-end gap-4 mb-8 mt-20">
         <Button onClick={() => {
           setModalOpen(true)
         }} variant="primary" text="Add content" startIcon={<PlusIcon />}></Button>
@@ -71,11 +73,11 @@ export function Dashboard() {
       </div>
 
       <div className="flex gap-4 flex-wrap">
-        {contents.map(({ type, link, title, createdAt }) => <Card
+        {contents.map(({ type, link, title, _id }) => <Card
+            key={_id}
             type={type}
             link={link}
             title={title}
-         
         />)}
       </div>
     </div>
